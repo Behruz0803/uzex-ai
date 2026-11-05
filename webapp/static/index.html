@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UZEX AI — Birja bitimlari tahlilchisi</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111a2e; --panel2:#0e1626; --line:#1e2a44;
+    --text:#e8eefc; --muted:#8ea0c4; --accent:#3b82f6; --accent2:#22d3ee;
+    --user:#1d4ed8; --bot:#131f38; --near:#f59e0b; --ok:#34d399;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:
+    radial-gradient(1200px 600px at 80% -10%,#16233f 0%,var(--bg) 55%);color:var(--text);
+    min-height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid var(--line);
+    background:rgba(10,16,30,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:5}
+  .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#04101f}
+  header h1{font-size:18px;margin:0}
+  header p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+  .spacer{flex:1}
+  .lang{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .lang button{background:transparent;border:0;color:var(--muted);padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600}
+  .lang button.active{background:var(--accent);color:#fff}
+  .badge{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:5px 10px;border-radius:999px}
+  main{flex:1;display:flex;flex-direction:column;max-width:900px;width:100%;margin:0 auto;padding:18px}
+  #chat{flex:1;display:flex;flex-direction:column;gap:14px;padding-bottom:12px}
+  .msg{max-width:88%;padding:14px 16px;border-radius:16px;line-height:1.55;font-size:15px;white-space:pre-wrap;word-wrap:break-word}
+  .msg.user{align-self:flex-end;background:var(--user);border-bottom-right-radius:4px}
+  .msg.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.bot .near{display:inline-block;background:rgba(245,158,11,.15);color:var(--near);border:1px solid rgba(245,158,11,.4);
+    padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;margin-bottom:8px}
+  .meta{font-size:11px;color:var(--muted);margin-top:8px}
+  details.sql{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  details.sql summary{cursor:pointer;color:var(--accent2);font-size:12px;font-weight:600}
+  details.sql pre{background:#0a1120;border:1px solid var(--line);border-radius:8px;padding:10px;overflow-x:auto;
+    font-size:12px;color:#a5f3fc;margin:8px 0 0;white-space:pre-wrap}
+  .examples{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+  .examples button{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:8px 12px;
+    border-radius:999px;cursor:pointer;font-size:12.5px;transition:.15s}
+  .examples button:hover{border-color:var(--accent);color:#fff}
+  .composer{display:flex;gap:10px;padding:14px 0 4px;border-top:1px solid var(--line);position:sticky;bottom:0;
+    background:linear-gradient(180deg,transparent,var(--bg) 30%)}
+  .composer textarea{flex:1;resize:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    color:var(--text);padding:13px 15px;font-size:15px;font-family:inherit;min-height:50px;max-height:140px;outline:none}
+  .composer textarea:focus{border-color:var(--accent)}
+  .composer button{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0;border-radius:14px;
+    color:#04101f;font-weight:700;padding:0 22px;cursor:pointer;font-size:15px}
+  .composer button:disabled{opacity:.5;cursor:not-allowed}
+  .typing{display:inline-flex;gap:4px;align-items:center}
+  .typing span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+  footer{text-align:center;color:var(--muted);font-size:11.5px;padding:10px}
+  a{color:var(--accent2)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">U</div>
+  <div>
+    <h1>UZEX AI</h1>
+    <p id="subtitle">Birja bitimlari bo'yicha AI-tahlilchi · 2022–2026</p>
+  </div>
+  <div class="spacer"></div>
+  <span class="badge" id="status">…</span>
+  <div class="lang">
+    <button id="btn-uz" class="active" onclick="setLang('uz')">O'zbekcha</button>
+    <button id="btn-ru" onclick="setLang('ru')">Русский</button>
+  </div>
+</header>
+<main>
+  <div class="examples" id="examples"></div>
+  <div id="chat"></div>
+  <div class="composer">
+    <textarea id="input" rows="1" placeholder="Savolingizni yozing…"></textarea>
+    <button id="send" onclick="send()">➤</button>
+  </div>
+</main>
+<footer id="footer">Har bir javob UZEX bitimlar reyestriga asoslanadi · SQL so'rov javob ostida ko'rsatiladi</footer>
+
+<script>
+const I18N = {
+  uz:{subtitle:"Birja bitimlari bo'yicha AI-tahlilchi · 2022–2026",
+      placeholder:"Savolingizni yozing…",send:"➤",
+      footer:"Har bir javob UZEX bitimlar reyestriga asoslanadi · SQL so'rov javob ostida ko'rsatiladi",
+      sql:"SQL so'rov",near:"Yaqin natijalar",thinking:"Tahlil qilinmoqda…",
+      welcome:"Assalomu alaykum! Men UZEX birja bitimlari bo'yicha AI-tahlilchiman.\n\nBazada 2022–2026-yillardagi 500 000 ta bitim mavjud. O'zbek yoki rus tilida savol bering — men aniq raqamlar va SQL so'rov bilan javob beraman.\n\nQuyidagi namuna savollardan birini bosing yoki o'z savolingizni yozing.",
+      err:"Xatolik yuz berdi. Iltimos, qayta urinib ko'ring."},
+  ru:{subtitle:"AI-аналитик биржевых сделок · 2022–2026",
+      placeholder:"Введите ваш вопрос…",send:"➤",
+      footer:"Каждый ответ основан на реестре сделок UZEX · SQL-запрос показан под ответом",
+      sql:"SQL-запрос",near:"Близкие результаты",thinking:"Анализирую…",
+      welcome:"Здравствуйте! Я AI-аналитик по биржевым сделкам UZEX.\n\nВ базе 500 000 сделок за 2022–2026 годы. Задайте вопрос на узбекском или русском — я отвечу точными цифрами и SQL-запросом.\n\nНажмите на один из примеров ниже или введите свой вопрос.",
+      err:"Произошла ошибка. Пожалуйста, попробуйте снова."}
+};
+let lang='uz', sessionId='web-'+Math.random().toString(36).slice(2), busy=false;
+const chat=document.getElementById('chat'), input=document.getElementById('input');
+
+function setLang(l){
+  lang=l;
+  document.getElementById('btn-uz').classList.toggle('active',l==='uz');
+  document.getElementById('btn-ru').classList.toggle('active',l==='ru');
+  document.getElementById('subtitle').textContent=I18N[l].subtitle;
+  document.getElementById('footer').textContent=I18N[l].footer;
+  input.placeholder=I18N[l].placeholder;
+  loadExamples();
+}
+async function loadExamples(){
+  const box=document.getElementById('examples'); box.innerHTML='';
+  try{
+    const r=await fetch('/api/examples?lang='+lang); const d=await r.json();
+    d.examples.forEach(q=>{const b=document.createElement('button');b.textContent=q;
+      b.onclick=()=>{input.value=q;send();};box.appendChild(b);});
+  }catch(e){}
+}
+function addMsg(role,text,extra){
+  const div=document.createElement('div');div.className='msg '+role;
+  if(role==='bot'&&extra){
+    if(extra.near_match){const n=document.createElement('div');n.className='near';n.textContent='⚠ '+I18N[lang].near;div.appendChild(n);}
+    const body=document.createElement('div');body.textContent=text;div.appendChild(body);
+    if(extra.sql){const det=document.createElement('details');det.className='sql';
+      const sum=document.createElement('summary');sum.textContent=I18N[lang].sql;det.appendChild(sum);
+      const pre=document.createElement('pre');pre.textContent=extra.sql+(extra.near_sql&&extra.near_sql!==extra.sql?('\n\n-- '+I18N[lang].near+':\n'+extra.near_sql):'');
+      det.appendChild(pre);div.appendChild(det);}
+    const meta=document.createElement('div');meta.className='meta';
+    meta.textContent=(extra.engine==='gemini'?'Gemini AI':'Local engine')+' · '+(extra.elapsed_ms/1000).toFixed(1)+'s';
+    div.appendChild(meta);
+  } else {div.textContent=text;}
+  chat.appendChild(div);chat.scrollTop=chat.scrollHeight;
+  window.scrollTo(0,document.body.scrollHeight);
+  return div;
+}
+function addTyping(){
+  const div=document.createElement('div');div.className='msg bot';div.id='typing';
+  div.innerHTML='<span class="typing"><span></span><span></span><span></span></span> '+I18N[lang].thinking;
+  chat.appendChild(div);window.scrollTo(0,document.body.scrollHeight);
+}
+async function send(){
+  const q=input.value.trim(); if(!q||busy)return;
+  busy=true;document.getElementById('send').disabled=true;
+  addMsg('user',q);input.value='';input.style.height='auto';addTyping();
+  try{
+    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:q,lang:lang,session_id:sessionId})});
+    const d=await r.json();
+    document.getElementById('typing')?.remove();
+    addMsg('bot',d.answer,d);
+  }catch(e){document.getElementById('typing')?.remove();addMsg('bot',I18N[lang].err);}
+  busy=false;document.getElementById('send').disabled=false;input.focus();
+}
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,140)+'px';});
+async function init(){
+  setLang('uz');
+  addMsg('bot',I18N.uz.welcome);
+  try{const r=await fetch('/api/health');const d=await r.json();
+    document.getElementById('status').textContent=(d.gemini_configured?'Gemini AI':'Local engine')+' · '+d.coverage.deals.toLocaleString()+' deals';
+  }catch(e){document.getElementById('status').textContent='offline';}
+}
+init();
+</script>
+</body>
+</html>

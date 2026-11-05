@@ -1,0 +1,18 @@
+# Environment / secrets
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Data & database (regenerate with: python etl.py)
+uzex_spot_data/
+google_drive/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.zip
+
+# Logs
+*.log
