@@ -1,18 +1,19 @@
-# Environment / secrets
 .env
-.venv/
-venv/
+.env.*
+!.env.example
 __pycache__/
 *.pyc
-
-# Data & database (regenerate with: python etl.py)
-uzex_spot_data/
-google_drive/
+.venv/
+venv/
+.vercel/
+data/uzex.db
+data/*.db
 *.db
-*.db-journal
-*.db-wal
-*.db-shm
-*.zip
+*.sqlite
+google_drive/
 
-# Logs
-*.log
+# Local data & artifacts
+uzex_spot_data/
+*.zip
+*.db-shm
+*.db-wal

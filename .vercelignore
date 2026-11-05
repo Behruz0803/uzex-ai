@@ -1,0 +1,9 @@
+presentations/
+__pycache__/
+.venv/
+venv/
+.git/
+*.md
+.env
+.env.*
+!.env.example

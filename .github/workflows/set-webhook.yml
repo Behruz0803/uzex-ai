@@ -1,0 +1,33 @@
+name: Telegram webhook
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Botning public URL manzili
+        required: false
+        default: https://ai-usta-bot-mbm15.vercel.app
+
+permissions:
+  contents: read
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask Vercel to set the Telegram webhook and warm the database
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: |
+          set -u
+          echo "health:"
+          curl -sS -m 30 -w "\nhttp=%{http_code}\n" "${BASE_URL}/api/webhook" || true
+          echo "setup webhook:"
+          curl -sS -m 60 -w "\nhttp=%{http_code}\n" "${BASE_URL}/api/webhook?setup=1" || true
+          echo
+          echo "warmup database:"
+          curl -sS -m 70 -w "\nhttp=%{http_code}\n" "${BASE_URL}/api/webhook?db=1" || true
+          echo
+          echo "webhook info:"
+          curl -sS -m 40 -w "\nhttp=%{http_code}\n" "${BASE_URL}/api/webhook?info=1" || true
+          echo

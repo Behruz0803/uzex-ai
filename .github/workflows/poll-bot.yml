@@ -1,0 +1,56 @@
+name: Poll Telegram bot
+
+# Runs on GitHub's runners, which can reach Telegram.
+# Uses repo secrets only — never writes the token into the repo.
+on:
+  workflow_dispatch:
+  push:
+    branches: [arena/ced752f8-ai-usta-bot]
+    paths: [".github/workflows/poll-bot.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -r requirements.txt
+      - name: Check token and start polling
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-3-flash-preview
+          LOG_CHAT_ID: "-1004357164659"
+        run: |
+          set -euo pipefail
+          if [ -z "${TELEGRAM_TOKEN}" ]; then
+            echo "TELEGRAM_TOKEN secret yo'q — polling ishga tushmaydi"
+            exit 0
+          fi
+          code=$(curl -sS -o /tmp/me.json -w "%{http_code}" "https://api.telegram.org/bot${TELEGRAM_TOKEN}/getMe" || true)
+          echo "getMe_http=${code}"
+          python3 - << 'PY'
+          import json
+          try:
+              d = json.load(open("/tmp/me.json"))
+          except Exception as e:
+              print("getMe parse error", e)
+              raise SystemExit(0)
+          user = (d.get("result") or {}).get("username")
+          print("bot_username=", user, "ok=", d.get("ok"))
+          open("/tmp/bot_user.txt","w").write(user or "")
+          PY
+          user=$(cat /tmp/bot_user.txt || true)
+          if [ "${user}" != "uzexaihackaton_bot" ]; then
+            echo "Secret boshqa botga tegishli yoki yaroqsiz. Polling to'xtatildi."
+            exit 0
+          fi
+          echo "Polling boshlandi: @${user}"
+          python bot.py

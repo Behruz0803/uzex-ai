@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UZEX AI Agent — 500k bitimlar</title>
+<style>
+*{box-sizing:border-box} body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0b1026;color:#e8f0ff;margin:0;padding:0}
+.header{background:linear-gradient(135deg,#0b1026,#1a2a6a);padding:32px 20px;text-align:center;border-bottom:1px solid #233}
+.header h1{margin:0;font-size:28px;color:#fff}
+.header p{color:#9bb;margin:8px 0 0}
+.container{max-width:900px;margin:0 auto;padding:20px}
+.card{background:#131a3a;border:1px solid #223; border-radius:12px; padding:16px; margin:16px 0}
+.chat{height:420px; overflow-y:auto; background:#0d1330; border:1px solid #223; border-radius:12px; padding:12px}
+.msg{margin:10px 0; padding:12px 14px; border-radius:10px; max-width:85%}
+.user{background:#1a5cff; color:#fff; margin-left:auto; text-align:right}
+.bot{background:#1e2a5a; color:#e8f0ff}
+.input-row{display:flex; gap:8px; margin-top:12px}
+.input-row input{flex:1; padding:12px; border-radius:10px; border:1px solid #334; background:#0d1330; color:#fff; font-size:15px}
+.input-row button{padding:12px 16px; border-radius:10px; border:0; background:#1a5cff; color:#fff; font-weight:600; cursor:pointer}
+.examples{display:flex; flex-wrap:wrap; gap:8px}
+.examples button{background:#16204a; color:#9bb; border:1px solid #334; padding:8px 12px; border-radius:20px; cursor:pointer; font-size:13px}
+.examples button:hover{background:#1a2a6a;color:#fff}
+pre{background:#0a0f2a; padding:12px; border-radius:8px; overflow-x:auto; font-size:13px}
+.sql{color:#5fd06e}
+.badge{display:inline-block; background:#1a5cff; color:#fff; padding:2px 8px; border-radius:20px; font-size:12px; margin-right:6px}
+.footer{text-align:center; color:#6a7; font-size:12px; margin:24px}
+a{color:#5fd06e}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📈 UZEX AI Agent</h1>
+  <p>500 000 ta bitim (2022-2026) bo'yicha Text-to-SQL — har javobda SQL va hisob-kitob bilan</p>
+  <p style="font-size:13px;color:#8af">O'zbek va Rus tillarini tushunadi • Anti-hallucination • 90 sekunddan kam (odatda 2-3 sek)</p>
+</div>
+<div class="container">
+  <div class="card">
+    <h3 style="margin:0 0 8px">💡 Savol namunalari (bosish bilan yuboriladi)</h3>
+    <div class="examples">
+      <button onclick="ask('2024 yilda eng koʻp bitim qilgan broker kim?')">🏆 Top broker 2024</button>
+      <button onclick="ask('BK001 brokeri 2025 yilda nechta bitimda ishtirok etgan?')">BK001 2025</button>
+      <button onclick="ask('Экспортные сделки в 2024 году сумма в сумах?')">💵 Eksport 2024</button>
+      <button onclick="ask('Sement boʻyicha eng qimmat bitim qaysi 2023 yilda?')">🏗 Sement 2023</button>
+      <button onclick="ask('STIR 921912462 boʻyicha jami savdo qancha?')">STIR misol</button>
+    </div>
+  </div>
+  <div class="card">
+    <div id="chat" class="chat">
+      <div class="msg bot">👋 Salom! Men UZEX birja ma'lumotlari bo'yicha AI yordamchiman. Savol bering.</div>
+    </div>
+    <div class="input-row">
+      <input id="q" placeholder="Savol yozing... (uz yoki ru)" onkeydown="if(event.key==='Enter') send()">
+      <button onclick="send()">Yuborish ➤</button>
+    </div>
+  </div>
+</div>
+<script>
+const chat=document.getElementById('chat');
+const input=document.getElementById('q');
+function addMsg(text, cls){
+  const d=document.createElement('div');
+  d.className='msg '+cls;
+  d.innerHTML=text.replace(/\n/g,'<br>');
+  chat.appendChild(d);
+  chat.scrollTop=chat.scrollHeight;
+}
+async function send(){
+  const q=input.value.trim();
+  if(!q) return;
+  addMsg(q,'user');
+  input.value='';
+  addMsg('⏳ Qidirilmoqda...','bot');
+  try{
+    const res=await fetch('/api/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
+    const data=await res.json();
+    chat.lastChild.remove();
+    let html=data.answer.replace(/```sql([\s\S]*?)```/g,'<pre class="sql">$1</pre>');
+    addMsg(html.replace(/\n/g,'<br>'),'bot');
+  }catch(e){
+    chat.lastChild.remove();
+    addMsg('⚠️ Xato: '+e.message,'bot');
+  }
+}
+function ask(t){ input.value=t; send(); }
+</script>
+</body>
+</html>
